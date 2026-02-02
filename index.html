@@ -1,27 +1,141 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Homework Answers</title>
-    <link rel="stylesheet" href="style.css">
+    <!-- Подключаем скрипт Телеграма -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            /* Используем цвета темы пользователя (темная/светлая) */
+            background-color: var(--tg-theme-bg-color, #1c1c1e);
+            color: var(--tg-theme-text-color, #ffffff);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .date-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--tg-theme-button-color, #3390ec);
+        }
+
+        /* Карточка с заданием */
+        .card {
+            background-color: var(--tg-theme-secondary-bg-color, #2c2c2e);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .task-type {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #8e8e93;
+            margin-bottom: 5px;
+        }
+
+        .task-content {
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .answer-box {
+            background-color: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace; /* Шрифт как в коде, удобно читать формулы */
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        /* Кнопка "Копировать" */
+        .copy-btn {
+            display: block;
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .copy-btn:active {
+            opacity: 0.7;
+        }
+
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="date-header">
-            <button class="nav-btn" id="prevDate">←</button>
-            <div class="current-date" id="currentDate">01/23/2026</div>
-            <button class="nav-btn" id="nextDate">→</button>
-        </div>
-        <div class="cards-container" id="cardsContainer">
-        </div>
 
-        <button class="copy-all-btn" id="copyAllBtn">
-            📋 Copy All Answers
-        </button>
+    <div class="header">
+        <div class="date-title">📅 Сегодня, 23 Янв</div>
+        <div style="font-size: 14px; opacity: 0.7">Держи ответы, бро</div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- Контейнер для заданий -->
+    <div id="tasks-container"></div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand(); // Растягиваем на весь экран
+
+        // Данные (В будущем можно передавать их из Python, пока зашьем сюда для примера)
+        const homeworkData = [
+            { type: "Vocabulary", question: "Learn words", answer: "Apple, Banana, Orange, Pineapple" },
+            { type: "Essay", question: "Write about summer", answer: "Summer is the hottest of the four temperate seasons, occurring after spring and before autumn." },
+            { type: "Workbook", question: "Ex. 5 (Fill gaps)", answer: "1. is\n2. are\n3. am\n4. were" }
+        ];
+
+        const container = document.getElementById('tasks-container');
+
+        // Генерируем карточки
+        homeworkData.forEach((task, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            
+            card.innerHTML = `
+                <div class="task-type">${task.type} • ${task.question}</div>
+                <div class="answer-box" id="ans-${index}">${task.answer.replace(/\n/g, '<br>')}</div>
+                <button class="copy-btn" onclick="copyText(${index}, this)">📋 Копировать ответ</button>
+            `;
+            container.appendChild(card);
+        });
+
+        // Функция копирования
+        function copyText(id, btnElement) {
+            // Берем сырой текст из данных, чтобы копировать с переносами строк
+            const textToCopy = homeworkData[id].answer; 
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = "✅ Скопировано!";
+                btnElement.style.backgroundColor = "#34c759"; // Зеленый цвет
+                
+                // Вернуть кнопку обратно через 2 секунды
+                setTimeout(() => {
+                    btnElement.innerText = originalText;
+                    btnElement.style.backgroundColor = ""; 
+                }, 2000);
+            }).catch(err => {
+                console.error('Ошибка копирования:', err);
+                tg.showAlert("Ошибка копирования");
+            });
+        }
+    </script>
 </body>
 </html>
